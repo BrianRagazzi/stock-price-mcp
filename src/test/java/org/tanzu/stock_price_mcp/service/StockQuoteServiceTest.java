@@ -9,13 +9,16 @@ import org.tanzu.stock_price_mcp.model.AlphaVantageResponse;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class StockQuoteServiceTest {
@@ -71,6 +74,12 @@ class StockQuoteServiceTest {
 
     @Test
     void testGetStockQuote_InvalidSymbol() {
+        // Arrange - Mock the validator to return validation errors
+        @SuppressWarnings("unchecked")
+        ConstraintViolation<Object> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn("Invalid symbol format");
+        when(validator.validate(any())).thenReturn(Set.of(violation));
+
         // Act & Assert - Invalid symbol should be caught by validation
         StepVerifier.create(stockQuoteService.getStockQuote("INVALID123"))
                 .expectError(IllegalArgumentException.class)
